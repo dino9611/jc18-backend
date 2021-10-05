@@ -1,224 +1,95 @@
-// const bebas = require("./name");
-// import bebas from "./name";
-// const { nama, kelas, listName, kalimat } = require("./name");
-// destructuring karena export di name adalah object
-// import {nama} from './name'
-// let sentece = kalimat(nama, kelas, listName[1]);
-// console.log(sentece);
-// console.log(nama, kelas, listName[0]);
-// let tepati = true;
+const express = require("express");
+const app = express();
+const PORT = 5000;
+const { tampilakanHtml } = require("./helpers");
 
-// const janji = () =>
-//   new Promise((resolve, reject) => {
-//     if (tepati) {
-//       resolve("terima");
-//     } else {
-//       reject("kemana aja eror");
-//     }
-//   });
+// data users anggap aja database
+let users = [
+  {
+    id: 1,
+    username: "tes",
+    password: "abce",
+  },
+  {
+    id: 2,
+    username: "tes",
+    password: "abce",
+  },
+];
+// data products anggap aja database
+let products = [
+  {
+    id: 1,
+    name: "tes1",
+    keterangan: "abce",
+  },
+  {
+    id: 2,
+    name: "tes2",
+    keterangan: "abce",
+  },
+];
+let id = 2;
+const loggingFunc = (req, res, next) => {
+  console.log(req.method, req.url, new Date().toString());
+  // nambah property dino di object req
+  req.dino = "namaku";
+  next();
+};
 
-// janji()
-//   .then((res) => {
-//     console.log(res);
-//   })
-//   .catch((err) => {
-//     console.log("err =>", err);
-//   });
+// middleware global start
+app.use(express.json());
+app.use(loggingFunc);
+// ini midlleware untuk nampung data body untuk method post,put,patch
 
-// setTimeout(() => {
-//   console.log(1);
-//   setTimeout(() => {
-//     console.log(2);
-//     setTimeout(() => {
-//       console.log(3);
-//     }, 2000);
-//   }, 2000);
-// }, 2000);
-
-// const tesPromise = (detik) => {
-//   return new Promise((resolve, reject) => {
-//     setTimeout(() => {
-//       resolve("selesai");
-//     }, detik * 1000);
-//   });
-// };
-
-// tesPromise(2).then(() => {
-//   console.log(1);
-//   tesPromise(2).then(() => {
-//     console.log(2);
-//     tesPromise(2).then(() => {
-//       console.log(3);
-//     });
-//   });
+// middleware end
+// middleware bisa ditengah endpoint ini atau di app.use agar menjadi middleware global
+// app.get("/", loggingFunc,async (req, res) => {
+//   console.log(req.dino, "dari function sebelumnya");
+//   let tampilanWelcome = await tampilakanHtml("./index.html");
+//   return res.status(200).send(tampilanWelcome);
 // });
 
-// tesPromise(2)
-//   .then(() => {
-//     console.log(1);
-//     return tesPromise(2);
-//   })
-//   .then(() => {
-//     console.log(2);
-//     return tesPromise(2);
-//   })
-//   .then(() => {
-//     console.log(3);
-//   });
-// ? module os
-// const os = require("os");
+app.get("/", async (req, res) => {
+  console.log(req.dino, "dari function sebelumnya");
+  let tampilanWelcome = await tampilakanHtml("./index.html");
+  return res.status(200).send(tampilanWelcome);
+});
 
-// console.log(os.userInfo());
+app.get("/products", (req, res) => {
+  console.log(req.dino, "dari function sebelumnya");
+  return res.status(200).send(products);
+});
 
-// let compObj = {
-//   name: os.type(),
-//   release: os.release(),
-//   totalMem: os.totalmem(),
-//   freeMem: os.freemem(),
-// };
+app.get("/users", (req, res) => {
+  console.log("query user", req.query);
+  return res.status(200).send(users);
+});
 
-// console.log(compObj);
+app.post("/products", (req, res) => {
+  console.log(req.body);
+  let data = req.body;
+  data.id = ++id;
+  // push data to database
+  products.push(data);
+  return res.status(200).send(products);
+});
 
-// ? module path
-// const path = require("path");
-// console.log(__dirname);
+app.delete("/products/:id", (req, res) => {
+  let id = req.params.id;
+  // cari index
+  let indexDelete = products.findIndex((val) => val.id == id);
 
-// const filePath = path.join(__dirname, "text", "test.txt");
-// console.log(filePath);
-
-// const fileResolvePath = path.resolve(__dirname, "./text/test.txt");
-// console.log(fileResolvePath);
-// const dir = require("./tes");
-
-// console.log(dir);
-
-// ? module fs (file system)  async / sync
-// const {
-//   readFileSync,
-//   writeFileSync,
-//   appendFileSync,
-//   writeFile,
-//   appendFile,
-//   readFile,
-
-// } = require("fs");
-
-// writeFile("./tes/listname.csv", "dino blabla", (err) => {
-//   if (err) {
-//     return console.log(err);
-//   }
-//   console.log("berhasil");
-// });
-// console.log("iya");
-// // const { writeFile, mkdir } = require("fs").promises;
-// readFile("./text/test.txt", (err, data) => {
-//   if (err) {
-//     return err;
-//   }
-//   console.log(data);
-// });
-
-// const hasil = readFileSync("./index.html", "utf-8");
-// var arr = [
-//   {
-//     username: "tes",
-//     password: "abce",
-//   },
-//   {
-//     username: "tes",
-//     password: "abce",
-//   },
-// ];
-
-////? buat file csv dan tambahin username password
-// writeFileSync("./text/coba.csv", `username,password\n`);
-
-// arr.forEach((val) => {
-//?   edit file atau tambah isi dari csv
-//   appendFileSync("./text/coba.csv", `${val.username},${val.password}\n`);
-// });
-
-// writeFile("/etc/dasdasdad", `username,password\n`)
-//   .then(() => {
-//     console.log("berhasil");
-//   })
-//   .catch((err) => {
-//     console.log(err);
-//   });
-
-// ? buat folder
-// mkdir("./public/user", { recursive: true }).then(() => {
-//   console.log("berhasil buat folder");
-// });
-
-// console.log(hasil);
-
-// ? http
-// var users = [
-//   {
-//     username: "tes",
-//     password: "abce",
-//   },
-//   {
-//     username: "tes",
-//     password: "abce",
-//   },
-// ];
-// var products = [
-//   {
-//     name: "tes1",
-//     keterangan: "abce",
-//   },
-//   {
-//     name: "tes2",
-//     keterangan: "abce",
-//   },
-// ];
-const http = require("http");
-const { createReadStream } = require("fs");
-// // const url = require("url");
-
-const server = http.createServer((req, res) => {
-  //proses mengubah data bahasa pemrograman menjadi json disebut serialisasi
-  //   console.log(req.url);
-  if (req.url === "/products" && req.method === "GET") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(products));
-  } else if (req.url === "/users" && req.method === "GET") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(users));
-  } else if (req.url === "/text" && req.method === "GET") {
-    res.writeHead(200, {
-      "Content-Type": "application/octet-stream",
-      "Content-Disposition": "attachment; filename=download.txt",
-    });
-
-    let readStream = createReadStream("./text/test.txt");
-
-    // readStream.on("open", () => {
-    //   console.log(data);
-    //   readStream.pipe(res);
-    // });
-
-    readStream.on("data", (data) => {
-      console.log(data);
-      readStream.pipe(res);
-    });
-    // This catches any errors that happen while creating the readable stream (usually invalid names)
-    readStream.on("error", function (err) {
-      res.end(err);
-    });
+  if (indexDelete >= 0) {
+    // delete data in array
+    products.splice(indexDelete, 1);
+    return res.status(200).send(products);
   } else {
     let obj = {
-      message: "selamat datang",
+      message: "tidak ada id",
     };
-    res.end(JSON.stringify(obj));
+    return res.status(400).send(obj);
   }
 });
 
-server.listen(5000, () => console.log("Server jalan di port 5000"));
-
-// const { isSatorSun } = require("./helpers");
-
-// console.log(isSatorSun()); //false
-// console.log(isSatorSun("2021-10-03")); //true
+app.listen(PORT, () => console.log("API jalan di PORT " + PORT));

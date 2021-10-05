@@ -1,0 +1,23 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Belajar",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dino9611/jc18-backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dino9611/jc18-backend/issues"
+  },
+  "homepage": "https://github.com/dino9611/jc18-backend#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}

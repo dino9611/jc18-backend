@@ -90,7 +90,7 @@ app.get("/products/:id", (req, res) => {
 
 app.get("/products", (req, res) => {
   // console.log(req.dino, "dari function sebelumnya");
-  console.log("63 req.query products", req.query);
+  // console.log("63 req.query products", req.query);
   const { namaProd, hargaMin, hargaMax } = req.query;
   let newFilterProd = products;
 

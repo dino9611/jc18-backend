@@ -8,7 +8,7 @@ select * from actor where first_name = 'PENELOPE';
 select * from actor where not first_name = 'PENELOPE' and actor_id>=100 order by first_name desc, last_name;
 
 -- urutan syntax
--- select > from > where and,not,or> having > group by >order by > limit
+-- select > from >join > where and,not,or> group by > having >order by > limit
 
 
 -- cari last namenya null  (is null, is not null)
@@ -94,4 +94,72 @@ where actor_id in (select actor_id from actor where first_name ='penelope');
 -- subquerynya harus menghasilkan row bebas dan hanya 1 column jika subquerynya dipake setelah operator in
 -- cari list data payment yang amountnya diatas rata2 (hint subquery)
  select * from payment where amount > (select avg(amount) as rata_amount from payment) ;
+ 
+ 
+-- join biasa 
+-- join doang artinya itu inner join
+ 
+ 
+ select fa.actor_id,first_name,last_name,fa.film_id,title 
+	 from actor a
+	 join film_actor fa on fa.actor_id = a.actor_id 
+	 join film f on f.film_id = fa.film_id
+	 where first_name ='penelope' and last_name='guiness';
+ -- cari nama actor dengan film terbanyak     
+ 
+select fa.actor_id, 
+concat(a.first_name,' ',a.last_name) as full_name, count(*) as jumlah_film 
+from film_Actor fa
+join actor a on a.actor_id=fa.actor_id 
+group by fa.actor_id 
+order by jumlah_film desc
+limit 1
+; 
+
+-- inner join  
+select * from user u join phone p on u.id = p.user_id ;
+
+-- left join  
+select * from user u left join phone p on u.id = p.user_id ;
+ 
+ -- right join  
+select * from user u right join phone p on u.id = p.user_id ;
+ 
+ 
+-- CREATE VIEW users_without_phone as
+-- select u.*,phone_numb from user u left join phone p on u.id = p.user_id where phone_numb is null ;
+-- show full tables;
+ 
+-- select * from users_without_phone where username like '%tomb%';
+ 
+ --  hitung total film tiap category, harus ada column nama kategorynya juga 
+ 
+ select fc.category_id,name, count(*) as total_film 
+ from film_category fc 
+ join category c 
+ on fc.category_id = c.category_id 
+ group by fc.category_id;
+ 
+  select fc.category_id,count(*) as total_film 
+ from film_category fc 
+ group by fc.category_id;
+ 
+ 
+ -- rata-rata harga sewa tiap category film urutkan dari yang terbesar, nama_category,rata-ratanya 
+	select fc.category_id ,c.name,avg(f.rental_rate) as rata2_rate
+    from film f
+    join  film_category fc
+    on f.film_id = fc.film_id
+    join category c 
+    on fc.category_id = c.category_id
+    group by fc.category_id
+    ;
+    
+    
+    
+ -- cari film dengan sales tertinggi 
+ -- cari category film dengan sales tertinggi
+ -- list total sales per toko
+ -- contoh group_concat dari list aktor tiap film 
+ 
  

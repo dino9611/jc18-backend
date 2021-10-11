@@ -244,5 +244,56 @@ select * from mysql.user;
 -- ALTER USER 'username'@'host' IDENTIFIED WITH mysql_native_password BY 'yourpassword';
 
 -- hasil penjualan film yang dibintangi penelope guiness
+select sum(amount) as total_sales,concat(first_name,' ',last_name) as full_name
+	from payment p
+	join rental r 
+	on p.rental_id = r.rental_id
+	join inventory i 
+	on r.inventory_id= i.inventory_id
+    join film_actor fa 
+    on i.film_id = fa.film_id
+    join actor a
+    on a.actor_id=fa.actor_id
+    where first_name = 'PENELOPE' AND last_name='GUINESS';
+    
 -- list aktor dari film dengan sales tertinggi
+select title,count(*) as total_cast ,group_concat(first_name separator '; ') as actors,total_sales
+from ( select i.film_id,sum(amount) as total_sales,f.title
+	from payment p
+	join rental r 
+	on p.rental_id = r.rental_id
+	join inventory i 
+	on r.inventory_id= i.inventory_id
+	join  film f
+	on i.film_id = f.film_id
+	group by i.film_id
+	order by total_sales desc 
+	limit 1 ) as tf
+    join film_actor fa on tf.film_id = fa.film_id
+    join actor a on fa.actor_id = a.actor_id
+;
+
+select title,count(*) as total_cast, 
+group_concat(first_name separator '; ') as actors,total_sales
+from film_top_sales as tf
+    join film_actor fa on tf.film_id = fa.film_id
+    join actor a on fa.actor_id = a.actor_id;    
+    
 -- siapa aktor yang memerankan paling banyak film
+
+
+select count(*) as total_film,a.actor_id ,a.first_name
+from film_actor fa
+join actor a on fa.actor_id =a.actor_id
+group by  actor_id order by total_film desc limit 1; 
+
+
+
+
+
+
+
+
+
+
+

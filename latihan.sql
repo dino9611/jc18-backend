@@ -146,20 +146,103 @@ select * from user u right join phone p on u.id = p.user_id ;
  
  
  -- rata-rata harga sewa tiap category film urutkan dari yang terbesar, nama_category,rata-ratanya 
-	select fc.category_id ,c.name,avg(f.rental_rate) as rata2_rate
+select fc.category_id ,c.name,avg(f.rental_rate) as rata2_rate
     from film f
     join  film_category fc
     on f.film_id = fc.film_id
     join category c 
     on fc.category_id = c.category_id
-    group by fc.category_id
+    group by fc.category_id ;
+    
+-- cari film dengan sales tertinggi 
+select sum(p.amount) as total_sales,i.film_id,f.title
+	from payment p
+	join rental r 
+	on p.rental_id = r.rental_id
+	join inventory i 
+	on r.inventory_id= i.inventory_id
+	join  film f
+	on i.film_id = f.film_id
+	group by i.film_id
+	order by total_sales desc 
+	limit 1 ;
+-- udah dibuat viwwnya;    
+select * from film_top_sales;
+    
+-- cari category film dengan sales tertinggi
+select fc.category_id,c.name,sum(p.amount) as total_sales
+	from payment p
+	join rental r 
+	on p.rental_id = r.rental_id
+	join inventory i 
+	on r.inventory_id= i.inventory_id
+    join film_category fc 
+    on i.film_id = fc.film_id
+    join category c 
+    on fc.category_id=c.category_id
+    group by category_id
+    order by total_sales desc
+    limit 1
     ;
     
+-- list total sales per toko
+select sum(p.amount) as total_sales,i.store_id
+	from payment p
+	join rental r 
+	on p.rental_id = r.rental_id
+	join inventory i 
+	on r.inventory_id= i.inventory_id
+    group by i.store_id;
     
     
- -- cari film dengan sales tertinggi 
- -- cari category film dengan sales tertinggi
- -- list total sales per toko
- -- contoh group_concat dari list aktor tiap film 
+-- contoh group_concat dari list aktor tiap film 
+select 
+	film_id, count(*) as jumlah_actor,
+    GROUP_CONCAT(
+		concat(a.first_name,' ', a.last_name)  order by first_name,last_name separator '; '
+	) as actors
+    from film_actor fa
+    join actor a
+    on fa.actor_id = a.actor_id
+    group by film_id;
  
  
+ 
+ select total_sales, title  from (select sum(p.amount) as total_sales,i.film_id,f.title
+	from payment p
+	join rental r 
+	on p.rental_id = r.rental_id
+	join inventory i 
+	on r.inventory_id= i.inventory_id
+	join  film f
+	on i.film_id = f.film_id
+	group by i.film_id) as top_Sales ;
+
+ -- group by 2 column
+ select count(*) as jumlah_film,film_id ,store_id,group_concat(inventory_id) from inventory group by film_id,store_id;
+ 
+ -- rata-rata rental-rate per cateogry_film
+select avg(rental_rate) as rata_rata_rate,c.category_id,c.name 
+	from film f 
+    join film_category fc 
+    on f.film_id = fc.film_id
+    join category c
+    on fc.category_id = c.category_id
+    group by c.category_id;
+    
+-- cari film dengan rental rate diatas rata-rata
+-- list total sales per bulan tahun 2005 
+-- SELECT @@sql_mode;
+
+select monthname(payment_date) as bulan, sum(amount) 
+	from payment 
+	where year(payment_date) = 2005
+    group by bulan;
+
+select * from mysql.user;
+
+-- ALTER USER 'username'@'host' IDENTIFIED WITH mysql_native_password BY 'yourpassword';
+
+-- hasil penjualan film yang dibintangi penelope guiness
+-- list aktor dari film dengan sales tertinggi
+-- siapa aktor yang memerankan paling banyak film

@@ -1,9 +1,26 @@
 const express = require("express");
 const app = express();
+require("dotenv").config();
 const cors = require("cors");
 const PORT = 5000;
 const { tampilakanHtml } = require("./helpers");
+const mysql = require("mysql");
 
+const connection = mysql.createConnection({
+  port: 3306,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: "bejc18",
+});
+
+connection.connect((err) => {
+  if (err) {
+    console.error("error connecting: " + err.stack);
+    return;
+  }
+
+  console.log("connected as id " + connection.threadId);
+});
 // data users anggap aja database
 let users = [
   {

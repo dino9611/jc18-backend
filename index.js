@@ -3,8 +3,9 @@ const app = express();
 require("dotenv").config();
 const cors = require("cors");
 const PORT = 5000;
-const { tampilakanHtml } = require("./helpers");
-const mysql = require("mysql");
+const { tampilakanHtml } = require("./src/helpers");
+// const mysql = require("mysql");
+const mysql = require("mysql2");
 
 const connection = mysql.createConnection({
   port: 3306,
@@ -21,44 +22,9 @@ connection.connect((err) => {
 
   console.log("connected as id " + connection.threadId);
 });
-// data users anggap aja database
-let users = [
-  {
-    id: 1,
-    username: "tes",
-    password: "abce",
-  },
-  {
-    id: 2,
-    username: "tes",
-    password: "abce",
-  },
-];
-// data products anggap aja database
-let products = [
-  {
-    id: 1,
-    name: "papan kayu",
-    price: 20000,
-  },
-  {
-    id: 2,
-    name: "kursi kayu",
-    price: 200000,
-  },
-  {
-    id: 3,
-    name: "lemari kece",
-    price: 50000,
-  },
-  {
-    id: 4,
-    name: "jendela bagus",
-    price: 100000,
-  },
-];
-
-let id = 4;
+// cara promisify
+// const { promisify } = require("util");
+// const connDb = promisify(connection.query).bind(connection);
 
 const loggingFunc = (req, res, next) => {
   console.log(req.method, req.url, new Date().toString());
@@ -130,9 +96,208 @@ app.get("/products", (req, res) => {
   return res.status(200).send(newFilterProd);
 });
 
-app.get("/users", (req, res) => {
+app.get("/login", (req, res) => {
   console.log("query user", req.query);
-  return res.status(200).send(users);
+  const { username, password } = req.query;
+  if (!username || !password) {
+    return res.status(400).send({ message: "kurang username or pass" });
+  }
+  // ? tidak secure rentan dengan serangan sql injection
+  // let sql = `select * from user
+  // where username= '${username}'
+  // aand password= '${password}'`;
+
+  //? secure cara pertama
+  // let sql = `select * from user
+  //           where username= ${connection.escape(username)}
+  //           and password= ${connection.escape(password)}`;
+
+  //? secure cara 2
+  let sql = `select * from user where username= ? and password= ?`;
+
+  // console.log(sql);
+
+  connection.query(sql, [username, password], (err, results) => {
+    if (err) {
+      console.log("error :", err);
+      return res.status(500).send({ message: err.message });
+    }
+    return res.status(200).send(results);
+  });
+});
+
+// buat siang
+// coba buat endpoint register,cek usernya dulu ada atau enggak, kalau berhasil langsung otomatis login.
+
+// add users
+app.post("/users", async (req, res) => {
+  console.log(req.body);
+  const { username, password, alamat } = req.body;
+  // kalo mau buat proteksi
+  if (!username || !password || !alamat) {
+    return res.status(400).send({ message: "kurang username or pass" });
+  }
+  //? cara mysql2 promise
+  let sql = `insert into user set ?`;
+  try {
+    let dataInsert = {
+      username: username,
+      password,
+      address: alamat,
+    };
+    const [results] = await connection.promise().query(sql, dataInsert);
+    console.log(results); // resultsnya insert itu object, property insertId lumayan penting
+    sql = `select * from user `;
+    const [userData] = await connection.promise().query(sql);
+    return res.status(200).send(userData);
+  } catch (error) {
+    console.log("error :", err);
+    return res.status(500).send({ message: err.message });
+  }
+
+  // ? cara pake mysql1
+  // let sql = `insert into user set ?`;
+  // let dataInsert = {
+  //   username: username,
+  //   password,
+  //   address: alamat,
+  // };
+  // connection.query(sql, dataInsert, (err, results) => {
+  //   if (err) {
+  //     console.log("error :", err);
+  //     return res.status(500).send({ message: err.message });
+  //   }
+  //   console.log(results); // resultsnya insert itu object, property insertId lumayan penting
+  //   // get data lagi
+  //   sql = `select * from user `;
+  //   connection.query(sql, (err, userData) => {
+  //     if (err) {
+  //       console.log("error :", err);
+  //       return res.status(500).send({ message: err.message });
+  //     }
+  //     // console.log('lewat 102') bisa digunakan untuk cek error
+  //     // console.log("results :", results); // selalu array of object
+  //     return res.status(200).send(userData);
+  //   });
+  // });
+});
+// sql transaction ??
+app.delete("/users/:iduser", (req, res) => {
+  const { iduser } = req.params;
+
+  let sql = `select id from user where id = ?`;
+  connection.query(sql, [iduser], (err, results1) => {
+    if (err) {
+      console.log("error :", err);
+      return res.status(500).send({ message: err.message });
+    }
+    if (!results1.length) {
+      //kalo length false/0 maka masuk sini
+      return res.status(500).send({ message: "id tidak ditemukan" });
+    }
+    sql = `delete from user where id = ?`;
+    connection.query(sql, [iduser], (err, results) => {
+      if (err) {
+        console.log("error :", err);
+        return res.status(500).send({ message: err.message });
+      }
+      // data udah pasti terhapus kalo console.log(results) terbaca
+      console.log(results);
+      // get data ulang
+      sql = `select * from user `;
+      connection.query(sql, (err, userData) => {
+        if (err) {
+          console.log("error :", err);
+          return res.status(500).send({ message: err.message });
+        }
+        // console.log('lewat 102') bisa digunakan untuk cek error
+        // console.log("results :", results); // selalu array of object
+        return res.status(200).send(userData);
+      });
+    });
+  });
+});
+
+app.put("/users/:iduser", (req, res) => {
+  const { username, password, address } = req.body; // isinya object
+  const { iduser } = req.params;
+  // ambil data berdasarkan id ada atau tidak
+  let sql = `select id from user where id = ?`;
+  connection.query(sql, [iduser], (err, results1) => {
+    if (err) {
+      console.log("error :", err);
+      return res.status(500).send({ message: err.message });
+    }
+    if (!results1.length) {
+      // kalo data dengan id yang diinput tidak ada maka masuk sini
+      //kalo length false/0 maka masuk sini
+      return res.status(500).send({ message: "id tidak ditemukan" });
+    }
+    // property objectnya harus sama dengan table sqlnya
+    let dataUpdate = {
+      username,
+      password,
+      address,
+    };
+    // edit query
+    sql = `update user set ? where id = ?`;
+    // sql = `update user set username = ${connection.escape(username)}, password = ? where id = ?`;
+    connection.query(sql, [dataUpdate, iduser], (err, results) => {
+      if (err) {
+        console.log("error :", err);
+        return res.status(500).send({ message: err.message });
+      }
+      // data udah pasti teredit kalo console.log(results) terbaca
+      console.log(results);
+      // get data ulang
+      sql = `select * from user `;
+      connection.query(sql, (err, userData) => {
+        if (err) {
+          console.log("error :", err);
+          return res.status(500).send({ message: err.message });
+        }
+        return res.status(200).send(userData);
+      });
+    });
+  });
+});
+
+app.get("/users", async (req, res) => {
+  // ? cara mysql2 dengan promise
+  let sql = `select * from user  `;
+  let connMysql = connection.promise();
+  try {
+    let [results] = await connMysql.query(sql); // connmysql.query itu hasil promisnya adalah array dimana array 1 adlah result ,array 2 itu field
+    console.log(results);
+    return res.status(200).send(results);
+  } catch (err) {
+    console.log("error :", err);
+    return res.status(500).send({ message: err.message });
+  }
+
+  // ?cara promise promisify
+
+  // let sql = `select * from user `;
+  // try {
+  //   let results = await connDb(sql);
+  //   console.log(results);
+  //   return res.status(200).send(results);
+  // } catch (error) {
+  //   console.log("error :", err);
+  //   return res.status(500).send({ message: err.message });
+  // }
+  // cara callback dengan mysql1
+  // console.log("query user", req.query);
+  // let sql = `select * from user `;
+  // connection.query(sql, (err, results) => {
+  //   if (err) {
+  //     console.log("error :", err);
+  //     return res.status(500).send({ message: err.message });
+  //   }
+  //   // console.log('lewat 102') bisa digunakan untuk cek error
+  //   // console.log("results :", results); // selalu array of object
+  //   return res.status(200).send(results);
+  // });
 });
 
 app.post("/products", (req, res) => {

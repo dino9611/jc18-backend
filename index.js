@@ -3,8 +3,6 @@ const app = express();
 require("dotenv").config();
 const cors = require("cors");
 const PORT = 5000;
-// const fs = require("fs");
-// const path = require("path");
 const { tampilakanHtml } = require("./src/helpers");
 const morgan = require("morgan");
 morgan.token("date", function (req, res) {

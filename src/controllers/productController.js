@@ -110,6 +110,7 @@ module.exports = {
     }
   },
   getProductById: async (req, res) => {
+    console.log("codingan di controller", req.user);
     const { id } = req.params;
     const connDb = connection.promise();
     try {

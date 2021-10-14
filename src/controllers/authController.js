@@ -53,7 +53,9 @@ module.exports = {
         id: results[0].id,
         role_id: results[0].role_id,
       };
-
+      // enkripsi seperti es batu bisa dibekukan lagi
+      // {id:110,role_id:3} <=> '213id0naudnqe91381238hadhabd'
+      // pembuatan token
       const tokenAccess = createTokenAccess(dataToken);
 
       return res.status(200).send({ token: tokenAccess, data: results });

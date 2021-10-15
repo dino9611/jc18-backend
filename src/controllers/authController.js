@@ -190,7 +190,7 @@ module.exports = {
         role_id: dataUserRes[0].role_id,
       };
       let tokenEmailVerified = createTokenEmailVerified(dataToken);
-      //?kirim email verifikasi
+      //? kirim email verifikasi
       let filepath = path.resolve(__dirname, "../template/emailVerif.html");
       // console.log(filepath);
       // ubah html jadi string pake fs.readfile
@@ -227,4 +227,15 @@ module.exports = {
       return res.status(500).send({ message: error.message });
     }
   },
+  // TODO feature lupa password :
+  // ? DAYA YANG DIPERLUKAN
+  // email
+  // username
+
+  // 1. endpoint kirmm link ganti password
+  // 2. endpoint ganti password harus melibatkan token
+  // algortihmnya ada di figjam detailnya
+  // https://www.figma.com/file/g3aCsaCk0EIJ7WHDGugeUU/Untitled?node-id=0%3A1
+
+  //
 };

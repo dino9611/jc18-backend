@@ -7,6 +7,7 @@ module.exports = {
     const token = jwt.sign(data, key, { expiresIn: "12h" }); // 12h
     return token;
   },
+
   createTokenEmailVerified: (data) => {
     // data ekpektasi object
     const key = "garou";

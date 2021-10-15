@@ -1,5 +1,6 @@
 const express = require("express");
-const { verifyEmailToken } = require("../helpers").verifiToken;
+const { verifyEmailToken, verifyTokenAccess } =
+  require("../helpers").verifiToken;
 const router = express.Router();
 const { authController } = require("./../controllers");
 
@@ -10,6 +11,7 @@ const {
   kirimEmail,
   verified,
   sendVerifiedEmail,
+  keepLogin,
 } = authController;
 
 router.get("/login", login);
@@ -18,6 +20,7 @@ router.get("/hash", hashingString);
 router.get("/kirimemail", kirimEmail);
 router.get("/kirimemail", kirimEmail);
 router.get("/verified", verifyEmailToken, verified);
-router.get("/send/verified", sendVerifiedEmail);
-
+router.get("/send/verified/:id_user", sendVerifiedEmail);
+router.get("/keep/login", verifyTokenAccess, keepLogin);
+// lupa password
 module.exports = router;

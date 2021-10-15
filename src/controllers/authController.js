@@ -180,7 +180,9 @@ module.exports = {
   },
   sendVerifiedEmail: async (req, res) => {
     const { id_user } = req.params;
+    const connDb = connection.promise();
     try {
+      // get userdata by id_user
       let sql = `select * from user where id = ?`;
       let [dataUserRes] = await connDb.query(sql, [id_user]);
       let dataToken = {
@@ -207,6 +209,19 @@ module.exports = {
         html: htmlToEmail,
       });
       return res.status(200).send({ message: "berhasil kirim email verified" });
+    } catch (error) {
+      console.log("error :", error);
+      return res.status(500).send({ message: error.message });
+    }
+  },
+  keepLogin: async (req, res) => {
+    // nggak update tokennya
+    const { id } = req.user;
+    const connDb = connection.promise();
+    try {
+      let sql = `select * from user where id = ?`;
+      let [dataUserRes] = await connDb.query(sql, [id]);
+      return res.status(200).send(dataUserRes[0]); // object
     } catch (error) {
       console.log("error :", error);
       return res.status(500).send({ message: error.message });

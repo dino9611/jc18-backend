@@ -1,25 +1,14 @@
 "use strict";
 const { connection } = require("./../connections");
-const { hashPass, createToken } = require("./../helpers");
-const nodemailer = require("nodemailer");
+const { hashPass, createToken, transporter } = require("./../helpers");
 const fs = require("fs");
 const path = require("path");
 const handlebars = require("handlebars");
 const { createTokenAccess, createTokenEmailVerified } = createToken;
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "dinotestes12@gmail.com", //email
-    pass: "schtfqtxjljngnng", // password
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
-
 module.exports = {
   login: (req, res) => {
+    // loginnya bisa pake username atau email , dan harus pake password yang tepat
     console.log("query user", req.query);
     const { username, password, email } = req.query;
     if (!username || !password) {
@@ -37,6 +26,9 @@ module.exports = {
 
     //? secure cara 2
     let sql = `select * from user where username= ? and password= ?`;
+
+    //? jika ingin loginnya bisa pake email atau username
+    // let sql = `select * from user where (username= ? or email = ? ) and password= ?`;
 
     // console.log(sql);
 
@@ -58,7 +50,7 @@ module.exports = {
       // pembuatan token
       const tokenAccess = createTokenAccess(dataToken);
 
-      return res.status(200).send({ token: tokenAccess, data: results });
+      return res.status(200).send({ token: tokenAccess, data: results[0] });
     });
   },
   register: async (req, res) => {
@@ -88,15 +80,27 @@ module.exports = {
         password: hashPass(password),
       };
       let [result] = await connDb.query(sql, [dataInsert]);
-      console.log(result.insertId);
-
+      console.log(result.insertId); // insertId adalah id yang baru dihasilkan dari insertData
+      //? get lagi datanya kayak login
+      sql = `select * from user where id = ?`;
+      let [dataUserRes] = await connDb.query(sql, [result.insertId]);
+      // send response
+      let dataToken = {
+        id: dataUserRes[0].id,
+        role_id: dataUserRes[0].role_id,
+      };
+      let tokenAccess = createTokenAccess(dataToken);
+      let tokenEmailVerified = createTokenEmailVerified(dataToken);
       //?kirim email verifikasi
       let filepath = path.resolve(__dirname, "../template/emailVerif.html");
       // console.log(filepath);
       // ubah html jadi string pake fs.readfile
       let htmlString = fs.readFileSync(filepath, "utf-8");
       const template = handlebars.compile(htmlString);
-      const htmlToEmail = template({ nama: username, userID: result.insertId });
+      const htmlToEmail = template({
+        nama: username,
+        token: tokenEmailVerified,
+      });
       console.log(htmlToEmail);
       // email with tamplate html
       await transporter.sendMail({
@@ -106,11 +110,7 @@ module.exports = {
         html: htmlToEmail,
       });
 
-      //? get lagi datanya kayak login
-      sql = `select * from user where id = ?`;
-      let [dataUserRes] = await connDb.query(sql, [result.insertId]);
-      // send response
-      return res.status(200).send(dataUserRes);
+      return res.status(200).send({ token: tokenAccess, data: dataUserRes[0] });
     } catch (error) {
       console.log("error :", error);
       return res.status(500).send({ message: error.message });
@@ -156,6 +156,57 @@ module.exports = {
       // });
       console.log(result);
       return res.send({ message: "berhasil kirim email" });
+    } catch (error) {
+      console.log("error :", error);
+      return res.status(500).send({ message: error.message });
+    }
+  },
+  verified: async (req, res) => {
+    const { id } = req.user;
+    const connDb = connection.promise();
+    try {
+      let updateData = {
+        isVerified: 1,
+      };
+      let sql = `update user set ? where id = ?`;
+      await connDb.query(sql, [updateData, id]);
+      sql = `select * from user where id = ?`;
+      let [dataUserRes] = await connDb.query(sql, [id]);
+      return res.status(200).send(dataUserRes[0]);
+    } catch (error) {
+      console.log("error :", error);
+      return res.status(500).send({ message: error.message });
+    }
+  },
+  sendVerifiedEmail: async (req, res) => {
+    const { id_user } = req.params;
+    try {
+      let sql = `select * from user where id = ?`;
+      let [dataUserRes] = await connDb.query(sql, [id_user]);
+      let dataToken = {
+        id: dataUserRes[0].id,
+        role_id: dataUserRes[0].role_id,
+      };
+      let tokenEmailVerified = createTokenEmailVerified(dataToken);
+      //?kirim email verifikasi
+      let filepath = path.resolve(__dirname, "../template/emailVerif.html");
+      // console.log(filepath);
+      // ubah html jadi string pake fs.readfile
+      let htmlString = fs.readFileSync(filepath, "utf-8");
+      const template = handlebars.compile(htmlString);
+      const htmlToEmail = template({
+        nama: dataUserRes[0].username,
+        token: tokenEmailVerified,
+      });
+      console.log(htmlToEmail);
+      // email with tamplate html
+      await transporter.sendMail({
+        from: "Naruto <dinotestes12@gmail.com>",
+        to: dataUserRes[0].email,
+        subject: "Email verifikasi dari hokage",
+        html: htmlToEmail,
+      });
+      return res.status(200).send({ message: "berhasil kirim email verified" });
     } catch (error) {
       console.log("error :", error);
       return res.status(500).send({ message: error.message });

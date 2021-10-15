@@ -32,7 +32,7 @@ module.exports.verifyTokenAccess = (req, res, next) => {
 module.exports.verifyEmailToken = (req, res, next) => {
   console.log("token", req.token);
   const token = req.token;
-  const key = "king"; // kata kunci terserah
+  const key = "garou"; // kata kunci terserah
   jwt.verify(token, key, (err, decoded) => {
     if (err) {
       console.log(err);

@@ -1,4 +1,5 @@
 const { connection } = require("./../connections");
+const { uploader } = require("./../helpers");
 
 module.exports = {
   getProducts: async (req, res) => {
@@ -140,5 +141,33 @@ module.exports = {
       console.log("error :", err);
       return res.status(500).send({ message: err.message });
     }
+  },
+  tesUpload: (req, res) => {
+    console.log("isi req file :", req.files); //dapetin data file
+    console.log("isi req body :", req.body); // dapetin data text
+
+    return res.status(200).send({
+      message: "berhasil upload",
+      isireqfile: req.files,
+    });
+  },
+  tesUploadOtherVer: (req, res) => {
+    const path = "/tes";
+    const uploadFile = uploader(path, "TES").fields([
+      { name: "image", maxCount: 3 },
+    ]);
+    uploadFile(req, res, (err) => {
+      if (err) {
+        return res
+          .status(500)
+          .json({ message: "Upload picture failed !", error: err.message });
+      }
+      console.log("isi req file :", req.files);
+
+      return res.status(200).send({
+        message: "berhasil upload",
+        isireqfile: req.files,
+      });
+    });
   },
 };

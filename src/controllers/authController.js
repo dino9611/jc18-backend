@@ -236,6 +236,5 @@ module.exports = {
   // 2. endpoint ganti password harus melibatkan token
   // algortihmnya ada di figjam detailnya
   // https://www.figma.com/file/g3aCsaCk0EIJ7WHDGugeUU/Untitled?node-id=0%3A1
-
   //
 };

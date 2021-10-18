@@ -35,12 +35,16 @@ app.use(
 // {id:110,role_id:3} <=> '213id0naudnqe91381238hadhabd'
 
 // middleware global start
+// ini midlleware untuk nampung data body untuk method post,put,patch
 app.use(express.json());
-app.use(cors()); // klo corsnya "cors()" artinya allow semua ip
+// klo corsnya "cors()" artinya allow semua ip
+app.use(cors());
 // untuk membuat token masuk kedalam variable req.token
 app.use(bearerToken());
-
-// ini midlleware untuk nampung data body untuk method post,put,patch
+//? parse form data berguna untuk upload file /
+app.use(express.urlencoded({ extended: false }));
+// untuk serving file statis contoh file statis adalah foto akrena dia statis/tidak berubah di kondisi apapun
+app.use(express.static("public"));
 
 app.get("/", async (req, res) => {
   // console.log(req.dino, "dari function/middleware sebelumnya");

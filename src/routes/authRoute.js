@@ -1,6 +1,6 @@
 const express = require("express");
 const { verifyEmailToken, verifyTokenAccess } =
-  require("../helpers").verifiToken;
+  require("../helpers").verifyToken;
 const router = express.Router();
 const { authController } = require("./../controllers");
 

@@ -17,9 +17,13 @@ const uploadFile = uploader("/tes", "TES").fields([
   { name: "tes", maxCount: 3 },
 ]);
 
+const uploadFileProd = uploader("/products", "PROD").fields([
+  { name: "image", maxCount: 3 },
+]);
+
 router.get("/", getProducts);
-router.post("/", addProducts);
-router.patch("/:id", editProduct);
+router.post("/", uploadFileProd, addProducts);
+router.patch("/:id", uploadFileProd, editProduct);
 router.get("/:id", verifyTokenAccess, getProductById);
 router.delete("/:id", deleteProduct);
 router.post("/tesupload", uploadFile, tesUpload);

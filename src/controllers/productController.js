@@ -1,6 +1,6 @@
 const { connection } = require("./../connections");
 const { uploader } = require("./../helpers");
-
+const fs = require("fs");
 module.exports = {
   getProducts: async (req, res) => {
     // pages=1 dan limit=2 default value jika req.query tidak ada
@@ -58,13 +58,27 @@ module.exports = {
     // jika semua querynya false pasti tidak difilter artinya newfilterprod tidak ada perubahan
     // newFilterProd adalah array of object
   },
+
   addProducts: async (req, res) => {
+    // isi path itu sama dengan parameter pertama function uploader di route
+    let path = "/products";
+    console.log(req.files);
     console.log(req.body);
-    const { name, price } = req.body;
+    const { image } = req.files; // image karena name di fieldnya image
+    // req.body kalo kirim file itu masih json harus kita parse
+    const data = JSON.parse(req.body.data);
+    // imagepath adalah tempat foto disimpan
+    let imagePath = image ? `${path}/${image[0].filename}` : null;
+    const { name, price } = data;
     // kalo mau buat proteksi
     if (!name || !price) {
+      if (imagePath) {
+        // hapus filenya jika error
+        fs.unlinkSync("./public" + imagePath);
+      }
       return res.status(400).send({ message: "kurang name or price" });
     }
+
     //? cara mysql2 promise
     // add data product to table products
     let sql = `insert into products set ?`;
@@ -72,6 +86,7 @@ module.exports = {
       let dataInsert = {
         name: name,
         price,
+        image: imagePath,
       };
       const [results] = await connection.promise().query(sql, dataInsert);
       console.log(results); // resultsnya insert itu object, property insertId lumayan penting
@@ -80,6 +95,10 @@ module.exports = {
       const [productData] = await connection.promise().query(sql);
       return res.status(200).send(productData);
     } catch (err) {
+      if (imagePath) {
+        // hapus filenya jika error
+        fs.unlinkSync("./public" + imagePath);
+      }
       console.log("error :", err);
       return res.status(500).send({ message: err.message });
     }
@@ -87,7 +106,13 @@ module.exports = {
   editProduct: async (req, res) => {
     const { id } = req.params;
     const connDb = connection.promise();
-
+    let path = "/products";
+    console.log(req.files);
+    console.log(req.body);
+    const { image } = req.files;
+    const data = JSON.parse(req.body.data);
+    // imagepath null bisa disebabkan karena file memang tidak dikirimkan
+    let imagePath = image ? `${path}/${image[0].filename}` : null;
     try {
       // cek product by id
       let sql = `select id from products where id = ?`;
@@ -96,16 +121,29 @@ module.exports = {
         // kalo kosong atau data tidak ada
         return res.status(500).send({ message: "id tidak ditemukan" });
       }
-      let dataUpdate = req.body;
-
+      let dataUpdate = {
+        name: data.name,
+        price: data.price,
+      };
+      if (imagePath) {
+        // klo imagepath tidak null
+        dataUpdate.image = imagePath;
+      }
       console.log("DATA UPDATE :", dataUpdate);
       // update product
       sql = `update products set ? where id = ?`;
       await connDb.query(sql, [dataUpdate, id]);
+      // kalo berhasil update
+      // hapus foto lama
+
       sql = `select * from products `;
       const [productData] = await connDb.query(sql);
       return res.status(200).send(productData);
     } catch (err) {
+      if (imagePath) {
+        // hapus filenya jika error
+        fs.unlinkSync("./public" + imagePath);
+      }
       console.log("error :", err);
       return res.status(500).send({ message: err.message });
     }
@@ -134,6 +172,15 @@ module.exports = {
       }
       sql = `delete from products where id = ?`;
       await connDb.query(sql, [id]);
+      // kalau delete sudah berhasil di sql
+      // maka hapus image jika image ada
+      if (productData[0].image) {
+        // memastikan image ada di path ini dengan existSync
+        if (fs.existsSync("./public" + productData[0].image)) {
+          // hapus filenya jika error
+          fs.unlinkSync("./public" + productData[0].image);
+        }
+      }
       sql = `select * from products`;
       const [prodData] = await connDb.query(sql);
       return res.status(200).send(prodData);

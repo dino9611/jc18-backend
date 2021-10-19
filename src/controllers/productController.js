@@ -115,7 +115,7 @@ module.exports = {
     let imagePath = image ? `${path}/${image[0].filename}` : null;
     try {
       // cek product by id
-      let sql = `select id from products where id = ?`;
+      let sql = `select id,image from products where id = ?`;
       let [dataProd] = await connDb.query(sql, [id]);
       if (!dataProd.length) {
         // kalo kosong atau data tidak ada
@@ -126,7 +126,7 @@ module.exports = {
         price: data.price,
       };
       if (imagePath) {
-        // klo imagepath tidak null
+        // klo imagepath tidak null maka masukkan path foto ke dalam database
         dataUpdate.image = imagePath;
       }
       console.log("DATA UPDATE :", dataUpdate);
@@ -135,7 +135,14 @@ module.exports = {
       await connDb.query(sql, [dataUpdate, id]);
       // kalo berhasil update
       // hapus foto lama
-
+      if (imagePath) {
+        // jika imagepath-nya ada
+        if (dataProd[0].image) {
+          // jika data image di dataprod tidak null/false
+          // hapus filenya jika error
+          fs.unlinkSync("./public" + dataProd[0].image);
+        }
+      }
       sql = `select * from products `;
       const [productData] = await connDb.query(sql);
       return res.status(200).send(productData);

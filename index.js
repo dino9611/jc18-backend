@@ -184,8 +184,8 @@ app.get("/movies", async (req, res) => {
   const collection = client.db("beljc18").collection("movies");
   try {
     const moviesData = await collection
-      .find({}, { projection: { title: 1, genres: 1, year: 1 } })
-      .skip(2)
+      .find({})
+      // .skip(2)
       .toArray();
     console.log(moviesData);
     return res.status(200).send(moviesData);
@@ -230,7 +230,72 @@ app.get("/search/movies", async (req, res) => {
 });
 
 // delete
+app.delete("/movies/:id", async (req, res) => {
+  const collection = client.db("beljc18").collection("movies");
+  let { id } = req.params;
+  try {
+    await collection.deleteMany({ _id: new ObjectId(id) });
+    return res.send({ message: "berhasil delete data movies" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ message: error.message });
+  }
+});
+
 // edit
+app.put("/movies/:id", async (req, res) => {
+  const collection = client.db("beljc18").collection("movies");
+  let { id } = req.params;
+  let { title, genres } = req.body; //
+  // req.body expect {title:"ubah title",genres:['dasdad']}
+  // $unset itu gunanya untuk mengahpus field $unset:{year:''}
+  try {
+    await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { ...req.body } }
+    );
+    return res.send({ message: "berhasil update data data movies" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ message: error.message });
+  }
+});
+
+//! aggregate atau get biasa harus ada to array diakhir
+
+app.get("/hitungGenre", async (req, res) => {
+  const collection = client.db("beljc18").collection("movies");
+  try {
+    // menghitung categories di tiap array
+    let data = await collection
+      .aggregate([
+        { $unwind: "$genres" }, // ngitung tiap value yang ada ddalam array
+        {
+          $group: {
+            _id: "$genres",
+            totalWins: { $sum: 1 },
+          },
+        },
+        { $sort: { genreCount: -1 } },
+      ])
+      .toArray();
+    // ngitung total win
+    // let data = await collection
+    // .aggregate([
+    //   {
+    //     $group: {
+    //       _id: null,
+    //       totalWins: { $sum: "$awards.wins" },
+    //     },
+    //   }
+    // ])
+    // .toArray();
+    return res.send(data);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ message: error.message });
+  }
+});
 
 app.all("*", (req, res) => {
   return res.status(404).send({ message: "not found" });

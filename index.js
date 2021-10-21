@@ -293,8 +293,16 @@ app.get("/hitungGenre", async (req, res) => {
 let users = 0;
 let messages = [];
 let messagescnl = [];
+let userRomm = [];
+let chatRoom2 = [];
+let chatRoom = [];
 
 app.get("/mess", (req, res) => {
+  const { nsp } = req.query;
+
+  if (nsp === "/channel") {
+    return res.status(200).send(messagescnl);
+  }
   return res.status(200).send(messages);
 });
 
@@ -307,14 +315,23 @@ app.post("/sendmess", (req, res) => {
     io.of("/channel").emit("pesan", messagescnl);
     return res.status(200).send({ messages: "berhasil kirim message" });
   } else {
-    messages.push(req.body);
-    // console.log(messages);
-    io.emit("pesan", messages);
-    return res.status(200).send({ messages: "berhasil kirim message" });
+    if (req.body.room) {
+      // ada room
+      chatRoom.push(req.body);
+      // proses ini bisa digabungkan dengan sql atau mongodb
+      io.to(req.body.room).emit("messageRoom", chatRoom);
+
+      return res.status(200).send({ messages: "berhasil kirim message" });
+    } else {
+      messages.push(req.body);
+      // console.log(messages);
+      io.emit("pesan", messages);
+      return res.status(200).send({ messages: "berhasil kirim message" });
+    }
   }
 });
 
-// io global connect
+// io global connect --namespace=default
 io.on("connection", (socket) => {
   console.log("isi socket :", socket.id);
   console.log("a user connected :", users);
@@ -326,9 +343,24 @@ io.on("connection", (socket) => {
     io.emit("balas", `${data.name} telah join chat `);
   });
 
-  socket.on("putus", () => {
-    io.disconnectSockets();
+  socket.on("joinRoom", (data) => {
+    socket.join(data.room); // buat sucscribe ke room
+    console.log(socket.rooms); // untuk lihat list room yang terdaftar
+    userRomm.push({ ...data, id: socket.id });
+    io.emit("respond", `${data.name} telah join room chat `);
   });
+
+  socket.on("leaveRoom", (data) => {
+    socket.leave(data.room); // buat sucscribe ke room
+    console.log(socket.rooms); // untuk lihat list room yang terdaftar
+
+    io.emit("respond", `${data.name} telah leave room chat `);
+  });
+
+  // belum bisa
+  // socket.on("putus", () => {
+  //   io.disconnectSockets();
+  // });
 
   socket.on("disconnect", (reason) => {
     console.log(reason);
@@ -342,11 +374,10 @@ io.on("connection", (socket) => {
 
 io.of("/channel").on("connection", (socket) => {
   console.log("isi socket namespace :", socket.id);
-  console.log("a user connected namespace :", users);
 
   socket.on("bebas", (data) => {
     console.log("di namesapce", data.name);
-
+    // cara emit di namespace
     io.of("/channel").emit("balas", `${data.name} telah join chat `);
   });
 

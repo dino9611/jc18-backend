@@ -1,9 +1,13 @@
 const express = require("express");
 const app = express();
+
+// socket IO set up
+const http = require("http");
 require("dotenv").config();
 const cors = require("cors");
 const bearerToken = require("express-bearer-token");
 const PORT = 5000;
+
 const { tampilakanHtml } = require("./src/helpers");
 const morgan = require("morgan");
 
@@ -11,28 +15,9 @@ morgan.token("date", function (req, res) {
   return new Date();
 });
 
-// const accessLogStream = fs.createWriteStream(
-//   path.join(__dirname, "access.log"),
-//   {
-//     flags: "a",
-//   }
-// );
-
 app.use(
-  morgan(
-    ":method :url :status :res[content-length] - :response-time ms :date"
-    // { stream: accessLogStream }
-  )
+  morgan(":method :url :status :res[content-length] - :response-time ms :date")
 );
-
-// app.use(morgan('common', {
-//   stream: fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' })
-// }))
-// nasi menjadi bubur
-
-// 'ddasdad' => '213id0naudnqe91381238hadhabd'
-// enkripsi seperti es batu bisa dibekukan lagi
-// {id:110,role_id:3} <=> '213id0naudnqe91381238hadhabd'
 
 // middleware global start
 // ini midlleware untuk nampung data body untuk method post,put,patch
@@ -45,6 +30,13 @@ app.use(bearerToken());
 app.use(express.urlencoded({ extended: false }));
 // untuk serving file statis contoh file statis adalah foto akrena dia statis/tidak berubah di kondisi apapun
 app.use(express.static("public"));
+
+// socket IO set up
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server, {
+  cors: "*",
+});
 
 app.get("/", async (req, res) => {
   // console.log(req.dino, "dari function/middleware sebelumnya");
@@ -297,10 +289,78 @@ app.get("/hitungGenre", async (req, res) => {
   }
 });
 
+// io set
+let users = 0;
+let messages = [];
+let messagescnl = [];
+
+app.get("/mess", (req, res) => {
+  return res.status(200).send(messages);
+});
+
+app.post("/sendmess", (req, res) => {
+  const { cnl } = req.query;
+  console.log(cnl);
+  if (cnl === "/channel") {
+    messagescnl.push(req.body);
+    console.log(req.body);
+    io.of("/channel").emit("pesan", messagescnl);
+    return res.status(200).send({ messages: "berhasil kirim message" });
+  } else {
+    messages.push(req.body);
+    // console.log(messages);
+    io.emit("pesan", messages);
+    return res.status(200).send({ messages: "berhasil kirim message" });
+  }
+});
+
+// io global connect
+io.on("connection", (socket) => {
+  console.log("isi socket :", socket.id);
+  console.log("a user connected :", users);
+
+  socket.on("bebas", (data) => {
+    users++;
+    console.log(data.name);
+
+    io.emit("balas", `${data.name} telah join chat `);
+  });
+
+  socket.on("putus", () => {
+    io.disconnectSockets();
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log(reason);
+    console.log("user disconnected");
+    users--;
+    console.log("total connected :", users);
+
+    // io.emit("user connected", userCount);
+  });
+});
+
+io.of("/channel").on("connection", (socket) => {
+  console.log("isi socket namespace :", socket.id);
+  console.log("a user connected namespace :", users);
+
+  socket.on("bebas", (data) => {
+    console.log("di namesapce", data.name);
+
+    io.of("/channel").emit("balas", `${data.name} telah join chat `);
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log("user disconnected");
+  });
+});
+
 app.all("*", (req, res) => {
   return res.status(404).send({ message: "not found" });
 });
 
+// 'event emitter'=> 'on emit'
+
 // latihan siang refactor endpoint user
 
-app.listen(PORT, () => console.log("API jalan di PORT " + PORT));
+server.listen(PORT, () => console.log("API jalan di PORT " + PORT));

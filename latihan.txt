@@ -1,0 +1,33 @@
+kasus e-commerce dengan gudang :
+1. user bisa login dengan email atau username dan password
+2. user boleh memiliki lebih dari satu alamat 
+3. product memiliki boleh lebih dari 1 kategori 
+4. product boleh memiliki lebih dari 1 foto
+5. product disimpan lebih dari satu gudang (stock barang terngatung gudang/ gudang lebih dari satu) // many-many
+6. user bisa memasukkan belanja ke cart.
+7. gudang lebih dari 1 
+
+
+kasus dompet digital :
+- user memiliki saldo (saldo adalah akumulasi dari topup dan transaksi)
+- user bisa login dengan email atau nomer hp atau username
+- list merchant 
+- merchat yagn bisa berjuaalan adalah merchant yagn terverifikasi.
+- user bisa top up .
+- history transaksi user bisa di tracking (tanggal harus ada) dia transsaksi di merchant apa saja, dan topup jadi satu
+- user bisa melihat total uang keluar dari applikasi
+- user bisa melihat total uang masuk dari aplikasi.
+stackholder
+- user 
+- merchant
+- penyedia layanan
+- saldo 
+
+transaksi
+id  user id   uang 
+1	1       1000 
+2	1       -200  
+
+buat design database untuk project kelas kemarin
+
+

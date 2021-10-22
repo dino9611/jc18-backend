@@ -6,7 +6,7 @@ const http = require("http");
 require("dotenv").config();
 const cors = require("cors");
 const bearerToken = require("express-bearer-token");
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 const { tampilakanHtml } = require("./src/helpers");
 const morgan = require("morgan");

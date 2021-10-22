@@ -1,10 +1,18 @@
 // const mysql = require("mysql");
 const mysql = require("mysql2");
 
+// const connection = mysql.createConnection({
+//   port: 3306,
+//   user: process.env.DB_USER,
+//   password: process.env.DB_PASS,
+//   database: "bejc18",
+// });
+
 const connection = mysql.createConnection({
+  host: "db4free.net",
   port: 3306,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
+  user: "dinopwdk",
+  password: "password",
   database: "bejc18",
 });
 
